@@ -10,20 +10,21 @@ class TokenHandler {
 	private static int $grace = 0;
 	private static string $host = 'localhost';
 	private static int $port = 11211;
+	private static string $prefix = 'IronChannel_';
 	private static ?\Closure $refreshfunc = null;
 
 	public static function get(string $key) : string {
 		$m = new \Memcached();
 		$m->addServer(self::$host, self::$port);
 
-		$token = $m->get($key);
+		$token = $m->get(self::$prefix.$key);
 		if($m->getResultCode()===\Memcached::RES_SUCCESS) {
 			$m->quit();
 			return $token;
 		}
 		elseif($m->getResultCode()===\Memcached::RES_NOTFOUND) {
-			$renew = self::refresh();
-			$m->set($key,$renew->get(),$renew->exp() - self::$grace);
+			$renew = self::refresh($key);
+			$m->set(self::$prefix.$key,$renew->get(),$renew->exp() - self::$grace);
 			$m->quit();
 			return $renew->get();
 		}
@@ -35,15 +36,15 @@ class TokenHandler {
 	public static function set(string $key,Token $input) : void {
 		$m = new \Memcached();
 		$m->addServer(self::$host, self::$port);
-		$m->set($key,$input->get(),$input->exp() - self::$grace);
+		$m->set(self::$prefix.$key,$input->get(),$input->exp() - self::$grace);
 		$m->quit();
 	}
 
-	private static function refresh() : Token {
+	private static function refresh(string $key) : Token {
 		if(self::$refreshfunc === null) {
 			throw new \Exception('TRP\IronChannel\TokenHandler::refresh callback not configured',500);
 		}
-		$return = (self::$refreshfunc)();
+		$return = (self::$refreshfunc)($key);
 		if(!$return instanceof Token) {
 			throw new \Exception('TRP\IronChannel\TokenHandler::refresh callback must return TRP\IronChannel\Token',500);
 		}
@@ -58,6 +59,9 @@ class TokenHandler {
 	}
 	public static function grace(int $grace) : void {
 		self::$grace = $grace;
+	}
+	public static function prefix(string $prefix) : void {
+		self::$prefix = $prefix;
 	}
 	public static function setrefresh(callable $refreshfunc) : void {
 		self::$refreshfunc = \Closure::fromCallable($refreshfunc);

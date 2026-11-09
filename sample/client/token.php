@@ -7,8 +7,8 @@ declare(strict_types=1);
 require_once __DIR__.'/../../lib/autoload.php';
 require_once __DIR__.'/function.php';
 
-function generate_token() {
-	sample_header('Generating Token');
+function generate_token(string $target) {
+	sample_header('Generating Token: '.$target);
 	$characters = '02X';
 	$string = '';
 	for($i = 0; $i < 6; $i++) {
@@ -17,6 +17,7 @@ function generate_token() {
 	return new \TRP\IronChannel\Token($string,10);
 }
 
+\TRP\IronChannel\TokenHandler::prefix('TokenList_');
 \TRP\IronChannel\TokenHandler::setrefresh('generate_token');
 
 //\TRP\IronChannel\TokenHandler::set('sample_1',new \TRP\IronChannel\Token('MANUAL',20));
