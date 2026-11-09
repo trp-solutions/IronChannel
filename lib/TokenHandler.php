@@ -23,13 +23,20 @@ class TokenHandler {
 		}
 		elseif($m->getResultCode()===\Memcached::RES_NOTFOUND) {
 			$renew = self::refresh();
-			$m->set($key,$renew->get(),$renew->exp()-self::$grace);
+			$m->set($key,$renew->get(),$renew->exp() - self::$grace);
 			$m->quit();
 			return $renew->get();
 		}
 		else {
 			throw new \Exception('TRP\IronChannel\TokenHandler::get Memcached error',500);
 		}
+	}
+
+	public static function set(string $key,Token $input) : void {
+		$m = new \Memcached();
+		$m->addServer(self::$host, self::$port);
+		$m->set($key,$input->get(),$input->exp() - self::$grace);
+		$m->quit();
 	}
 
 	private static function refresh() : Token {

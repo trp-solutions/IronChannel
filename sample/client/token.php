@@ -19,6 +19,8 @@ function generate_token() {
 
 \TRP\IronChannel\TokenHandler::setrefresh('generate_token');
 
+//\TRP\IronChannel\TokenHandler::set('sample_1',new \TRP\IronChannel\Token('MANUAL',20));
+
 sample_start();
 
 sample_header('Token');
